@@ -67,7 +67,7 @@ router.post('/courses', authenticateUser, asyncHandler(async (req, res) => {
   } */
   try {
       let courseData = req.body ;
-      newCourse = await Course.create(courseData).then(x => console.log(x)) ;
+      newCourse = await Course.create(courseData) //.then(x => console.log(x)) ;
       const { id } = newCourse;
       console.log(typeof(newCourse))
       console.log("Never gets here: (after create Course) ");
