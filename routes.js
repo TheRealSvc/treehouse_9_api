@@ -5,20 +5,9 @@ const router = express.Router();
 const User = require('./models').User;
 const Course = require('./models').Course;
 const { authenticateUser } = require('./middleware/auth-user');
+const { asyncHandler } = require('./middleware/async-handler');
 
 
-
-// Handler function to wrap each route.
-function asyncHandler(cb) {
-  return async (req, res, next) => {
-    try {
-      await cb(req, res, next);
-    } catch (error) {
-      // Forward error to the global error handler
-      next(error);
-    }
-  }
-}
 
 //  1 ----- User Routes --------------------------
 
@@ -78,11 +67,13 @@ router.post('/courses', authenticateUser, asyncHandler(async (req, res) => {
   } */
   try {
       let courseData = req.body ;
-      newCourse = await Course.create(courseData) ;
+      newCourse = await Course.create(courseData).then(x => console.log(x)) ;
+      const { id } = newCourse;
+      console.log(typeof(newCourse))
       console.log("Never gets here: (after create Course) ");
-      res.status(201).location(`/api/courses/${newCourse.id}`).end(); 
+      res.status(201).location('/api/courses/' + id).end(); 
   } catch (error) {
-      console.log(" 1: Error ");
+      console.log(` 1: Error  `);
     if (error.name === 'SequelizeValidationError' || error.name === 'SequelizeUniqueConstraintError') {
       console.log(" 2: Error ");
       const errors = error.errors.map(err => err.message);
@@ -95,9 +86,61 @@ router.post('/courses', authenticateUser, asyncHandler(async (req, res) => {
 })
 );
 
-
 //A /api/courses/:id PUT route that will update the corresponding course and return a 204 HTTP status code and no content.
+router.put('/courses/:id', authenticateUser, asyncHandler(async (req, res) => {
+  try {
+      const course = await Course.findByPk(req.params.id);
+          // extract the current user from request
+          const { currentUser } = req; 
+          if (course) {
+              // And if the current user created the content, allow them to edit it. If not, a 403 forbidden is sent.
+              if (currentUser.id === course.userId) {
+                  await course.update(req.body);
+                  res.status(204).end();
+              } else {
+                  res.status(403).end();
+              }}
+  } catch (error) {
+    if (error.name === 'SequelizeValidationError' || error.name === 'SequelizeUniqueConstraintError') {
+      const errors = error.errors.map(err => err.message);
+      res.status(400).json({ errors });   
+    } else {
+      throw error;
+    }
+  }
+})
+);
+
+
+
 
 //A /api/courses/:id DELETE route that will delete the corresponding course and return a 204 HTTP status code and no content.
+router.delete('/courses/:id', authenticateUser, asyncHandler(async (req, res) => {
+  try {
+      const course = await Course.findByPk(req.params.id);
+          // extract the current user from request
+          const { currentUser } = req; 
+          if (course) {
+              // And if the current user created the content, allow them to edit it. If not, a 403 forbidden is sent.
+              if (currentUser.id === course.userId) {
+                  await course.destroy(req.body);
+                  res.status(204).end();
+              } else {
+                  res.status(403).end();
+              }}
+  } catch (error) {
+    if (error.name === 'SequelizeValidationError' || error.name === 'SequelizeUniqueConstraintError') {
+      const errors = error.errors.map(err => err.message);
+      res.status(400).json({ errors });   
+    } else {
+      throw error;
+    }
+  }
+})
+);
+
+
+
+
 
 module.exports = router;
