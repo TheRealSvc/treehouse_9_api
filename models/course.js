@@ -10,16 +10,10 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      // define association here
-      Course.belongsTo(models.User, {
-        foreignKey: {
-          fieldName: 'userId',
-          allowNull: false,
-        }
-      });
+      Course.belongsTo(models.User) ; // this automatically creates/uses an userId column in Course (see sequelize docu) 
+      };
     }
-  };
-
+  
   Course.init({
    id: {
       type: DataTypes.INTEGER,

@@ -13,7 +13,7 @@ const enableGlobalErrorLogging = process.env.ENABLE_GLOBAL_ERROR_LOGGING === 'tr
 // create the Express app
 const app = express();
 
-
+// check connection 
 (async () => {
   try {
     await sequelize.authenticate();
