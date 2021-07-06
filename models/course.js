@@ -51,9 +51,5 @@ module.exports = (sequelize, DataTypes) => {
     modelName: 'Course',
   });
 
-  //Course.associate = (models) => {
-  //  Course.belongsTo(models.User);
-  //}  // makes sure to use a userId in Courses as the foreign-key to be used with the primary key (id) of Users. 1:1 means one row with userId belongs to one course
-  
   return Course;
 };

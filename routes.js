@@ -12,7 +12,7 @@ const { asyncHandler } = require('./middleware/async-handler');
 //  1 ----- User Routes -----------------------------------------------------
 //
 
-// Route that returns the currently authenticated user.
+// Route that returns the currently authenticated user. 
 router.get('/users', authenticateUser, asyncHandler(async (req, res) => {
     let user = req.currentUser ;
     res.status(200).json({ 
@@ -22,7 +22,6 @@ router.get('/users', authenticateUser, asyncHandler(async (req, res) => {
       "lastName": user.lastName,
       "emailAddress": user.emailAddress});
 }));
-
 
 
 // Route that creates a new user.
@@ -42,7 +41,6 @@ router.post('/users', asyncHandler(async (req, res) => {
     }
   })
 );
-
 
 //
 // 2 ----- Course routes ------------------------------------------------------
@@ -66,9 +64,10 @@ return res;
 
 
 //A /api/courses GET route that will return all courses including the User associated with each course and a 200 HTTP status code.
+// for later: my filterJson fun could be removed if i directly filtered attributes using sequelize
 router.get('/courses', asyncHandler(async (req, res) => {
-    let courses = await Course.findAll() ; 
-    const display = ["id", "title", "description", "estimatedTime", "materialsNeeded"] ;
+    let courses = await Course.findAll( {include:[{ model: User, attributes: ['id', 'firstName', 'lastName', 'emailAddress'] }] }) ; 
+    const display = ["id", "title", "description", "estimatedTime", "materialsNeeded", "User"] ;
     let ress = filterJson(courses, display);
     res.status(200).json(ress);
 }));
@@ -77,13 +76,14 @@ router.get('/courses', asyncHandler(async (req, res) => {
 //A /api/courses/:id GET route that will return the corresponding course including the User associated with that course and a 200 HTTP status code.
 router.get('/courses/:id', asyncHandler(async (req, res) => {
   try {
-    const course = await Course.findByPk(req.params.id);
+    const course = await Course.findByPk(req.params.id, {include: { model: User, attributes: ['id', 'firstName', 'lastName', 'emailAddress']}});
     res.status(200).json({
       "id": course.id ,
       "title": course.title , 
       "description": course.description , 
       "estimatedTime": course.estimatedTime , 
-      "materialsNeeded": course.materialsNeeded 
+      "materialsNeeded": course.materialsNeeded, 
+      "User": course.User
     });
   } catch (error) {
     console.log(error) ;
@@ -117,14 +117,15 @@ router.post('/courses', authenticateUser, asyncHandler(async (req, res) => {
 router.put('/courses/:id', authenticateUser, asyncHandler(async (req, res) => {
   try {
       const course = await Course.findByPk(req.params.id);
-          const { currentUser } = req; 
-          if (course) {
-              if (currentUser.id === course.userId) { // cases: is authenticated (204) / not authenticated (403)
-                  await course.update(req.body);
-                  res.status(204).end();
-              } else {
-                  res.status(403).end();
-              }}
+      const { currentUser } = req; 
+        if (course) {
+          if (currentUser.id === course.userId) { // cases: is authenticated (204) / not authenticated (403)
+              await course.update(req.body);
+              res.status(204).end();
+             } else {
+              res.status(403).end();
+          }
+        }
   } catch (error) {
     if (error.name === 'SequelizeValidationError' || error.name === 'SequelizeUniqueConstraintError') {
       const errors = error.errors.map(err => err.message);
@@ -140,16 +141,17 @@ router.put('/courses/:id', authenticateUser, asyncHandler(async (req, res) => {
 router.delete('/courses/:id', authenticateUser, asyncHandler(async (req, res) => {
   try {
       const course = await Course.findByPk(req.params.id);
-          // extract the current user from request
-          const { currentUser } = req; 
-          if (course) {
-              // And if the current user created the content, allow them to edit it. If not, a 403 forbidden is sent.
-              if (currentUser.id === course.userId) { // cases: is authenticated (204) / not authenticated (403)
-                  await course.destroy(req.body);
-                  res.status(204).end();
-              } else {
-                  res.status(403).end();
-              }}
+      // extract the current user from request
+      const { currentUser } = req; 
+      if (course) {
+        // And if the current user created the content, allow them to edit it. If not, a 403 forbidden is sent.
+        if (currentUser.id === course.userId) { // cases: is authenticated (204) / not authenticated (403)
+          await course.destroy(req.body);
+          res.status(204).end();
+          } else {
+          res.status(403).end();
+        }
+      }
   } catch (error) {
     if (error.name === 'SequelizeValidationError' || error.name === 'SequelizeUniqueConstraintError') {
       const errors = error.errors.map(err => err.message);
