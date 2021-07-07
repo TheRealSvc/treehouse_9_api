@@ -14,7 +14,7 @@ exports.authenticateUser = async (req, res, next) => {
   let message;
   console.log(`In auth-user.js req  = ${req.headers.authorization}`);
   const credentials = auth(req);
-  console.log(`In auth-user.js credentials = ${credentials.pass}`);
+  //console.log(`In auth-user.js credentials = ${credentials.pass}`); //leads to a timeout in case of no auth 
 
   if (credentials) {
     const user = await User.findOne({ where: {emailAddress: credentials.name} });
