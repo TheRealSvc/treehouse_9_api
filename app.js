@@ -5,14 +5,21 @@ const express = require('express');
 const morgan = require('morgan');
 const sequelize = require("./models").sequelize;
 const routes = require("./routes");
+const compression = require('compression');
+const helmet = require('helmet');
+
 // variable to enable global error logging
+// Import cors library
+const cors = require('cors');
+// Enable all CORS Requests
 const enableGlobalErrorLogging = process.env.ENABLE_GLOBAL_ERROR_LOGGING === 'true';
 
 //const bodyParser = require('body-parser');
 
 // create the Express app
 const app = express();
-
+app.use(helmet()) ;
+app.use(compression());
 // check connection 
 (async () => {
   try {
@@ -24,6 +31,8 @@ const app = express();
     console.log("Failed to connect to database or syncing failed", err);
   }
 })();
+
+app.use(cors()); // enables cors "globally" 
 
 // setup morgan which gives us http request logging
 app.use(morgan('dev'));
