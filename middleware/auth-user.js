@@ -12,13 +12,12 @@ const bcrypt = require('bcrypt');
  */
 exports.authenticateUser = async (req, res, next) => {
   let message;
-  console.log(`In auth-user.js req  = ${req.headers.authorization}`);
+  //console.log(`In auth-user.js req  = ${req.headers.authorization}`);
   const credentials = auth(req);
-  //console.log(`In auth-user.js credentials = ${credentials.pass}`); //leads to a timeout in case of no auth 
 
   if (credentials) {
     const user = await User.findOne({ where: {emailAddress: credentials.name} });
-    console.log(`sooooo ${Object.keys(user.dataValues)}`);
+    //console.log(`sooooo ${Object.keys(user.dataValues)}`);
     if (user) {
       const authenticated = bcrypt
         .compareSync(credentials.pass, user.password); 
